@@ -47,17 +47,21 @@ def transpose_create_geoid(df):
     df['GEOID'] = df['GEOID'].astype('Int64')
     return df
 
-def food_desert_map(ttm_df, title, centroid_df, blockgroup_df, vulnerability_df, tract_df):
+def food_desert_map(ttm_df, title, centroid_df, blockgroup_df, vulnerability_df):
+    #make new dataframe with shortest travel time
     shortest_time_df = ttm_df.groupby('from_id')['travel_time'].min().reset_index()
     shortest_time_df = centroid_df.merge(shortest_time_df, left_on = 'id', right_on = 'from_id')
     shortest_time_df = shortest_time_df.to_crs(4269)
+    #join with block group map and identify the block groups in which the shortest travel time exceeds 10 minutes
     shortest_time_df = blockgroup_df.sjoin(shortest_time_df)
     shortest_time_df['GEOID'] = shortest_time_df['GEOID_left'].astype(str).str.slice(stop=11).astype('int64')
     shortest_time_df = shortest_time_df.loc[shortest_time_df['travel_time'] >= 10]
-    shortest_time_df = shortest_time_df.groupby('GEOID')['travel_time'].mean().reset_index()
-    shortest_time_df = vulnerability_df.merge(shortest_time_df, on = 'GEOID')
-    base = tract_df.plot(color = 'white', edgecolor = 'black')
-    shortest_time_df.plot('travel_time', ax = base, edgecolor = 'black')
+    #identifyblock groups which are located in socially vulnerable tracts and have low access to grocery stores
+    shortest_time_df = shortest_time_df[['GEOID', 'geometry']]
+    shortest_time_df = shortest_time_df.merge(vulnerability_df, on = 'GEOID')
+    shortest_time_df = shortest_time_df.set_geometry('geometry_x')
+    base = blockgroup_df.plot(color = 'white', edgecolor = 'black')
+    shortest_time_df.plot(color = 'red', ax = base, edgecolor = 'black')
     plt.title(title)
     base.set_axis_off()
     return base

@@ -55,9 +55,10 @@ def food_desert_map(ttm_df, title, centroid_df, blockgroup_df, vulnerability_df)
     #join with block group map and identify the block groups in which the shortest travel time exceeds 10 minutes
     shortest_time_df = blockgroup_df.sjoin(shortest_time_df)
     shortest_time_df['GEOID'] = shortest_time_df['GEOID_left'].astype(str).str.slice(stop=11).astype('int64')
-    shortest_time_df = shortest_time_df.loc[shortest_time_df['travel_time'] >= 10]
-    #identify block groups which are located in socially vulnerable tracts and have low access to grocery stores
-    shortest_time_df = shortest_time_df[['GEOID', 'geometry']]
+    shortest_time_df = shortest_time_df.loc[shortest_time_df['travel_time'] > 10]
+    #identify  block groups which are located in socially vulnerable tracts and have low access to grocery stores
+    shortest_time_df[title + '_travel_time'] = shortest_time_df['travel_time']
+    shortest_time_df = shortest_time_df[['GEOID', 'geometry', title + '_travel_time', 'GEOID_left']]
     shortest_time_df = shortest_time_df.merge(vulnerability_df, on = 'GEOID')
     shortest_time_df = shortest_time_df.set_geometry('geometry_x')
     base = blockgroup_df.plot(color = 'white', edgecolor = 'black')

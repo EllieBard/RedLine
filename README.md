@@ -11,4 +11,4 @@ matplotlib==3.7.2
 mapclassify==2.6.0  
 shapely==2.0.1  
 folium==0.14.0  
-r5py==0.0.4  
+r5py==0.1.0  
